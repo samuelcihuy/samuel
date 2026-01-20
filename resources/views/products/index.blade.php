@@ -5,23 +5,33 @@
 
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-    <!-- Header dengan glass effect -->
+   
     <div class="mb-12">
       <div class="backdrop-blur-lg bg-white/80 rounded-3xl p-8 border border-white/30 shadow-xl">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
             <h1 class="text-3xl md:text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-              Koleksi Produk Premium
+              Koleksi Produk Kami
             </h1>
             <p class="text-gray-600 mt-2">Temukan produk terbaik dengan kualitas premium</p>
           </div>
           
           <div class="flex items-center gap-4">
-            <div class="relative">
-            </div>
+            <div class="relative"></div>
+            @php
+              $cartCount = 0;
+              foreach(session()->get('cart', []) as $c) { $cartCount += ($c['qty'] ?? 0); }
+            @endphp
+
+            <a href="/history" 
+               class="px-4 py-2 bg-white border border-gray-200 text-gray-700 font-medium rounded-2xl shadow-sm hover:shadow-md hover:bg-gray-50 transition-colors duration-200">
+              Riwayat
+            </a>
+
             <a href="/cart" 
                class="relative px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl hover:from-emerald-600 hover:to-teal-600 transition-all duration-300 transform hover:-translate-y-0.5 active:translate-y-0 flex items-center gap-2 group overflow-hidden">
               <span class="relative z-10">🛒 Keranjang</span>
+              <span id="cart-count" class="ml-2 inline-flex items-center justify-center px-2 py-0.5 text-xs font-semibold bg-white/20 rounded-full">{{ $cartCount }}</span>
               <span class="absolute inset-0 bg-gradient-to-r from-emerald-600 to-teal-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
             </a>
           </div>
@@ -30,7 +40,7 @@
     </div>
 
     <!-- Grid Produk -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
 
       @forelse($products as $product)
       @php
@@ -48,9 +58,9 @@
           $color = $colors[$loop->index % count($colors)];
       @endphp
 
-      <div class="group flex flex-col rounded-3xl overflow-hidden border-2 {{ $color }}
-                  hover:shadow-2xl hover:shadow-indigo-100/50 hover:-translate-y-3 
-                  transition-all duration-500 backdrop-blur-sm">
+      <div class="group flex flex-col rounded-2xl overflow-hidden border {{ $color }}
+          hover:shadow-2xl hover:shadow-indigo-100/40 hover:-translate-y-2
+          transition-all duration-300 backdrop-blur-sm">
 
         <!-- Image Container -->
         <div class="relative aspect-square overflow-hidden">
@@ -71,7 +81,7 @@
         </div>
 
         <!-- Body -->
-        <div class="p-5 flex flex-col flex-1 bg-white/70 backdrop-blur-sm">
+        <div class="p-4 flex flex-col flex-1 bg-white/70 backdrop-blur-sm">
           
           <!-- Category Badge -->
           <div class="mb-2">
@@ -127,13 +137,20 @@
           </div>
 
           <!-- Button -->
-          <form action="/cart/add/{{ $product->id }}" method="POST" class="mt-auto">
+          <form action="/cart/add/{{ $product->id }}" method="POST" class="mt-auto add-to-cart-form">
             @csrf
+
+            <div class="flex items-center gap-2 mb-3">
+              <button type="button" class="qty-decrement px-3 py-1 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200">-</button>
+              <input type="number" name="qty" value="1" min="1" class="w-16 text-center rounded-lg border border-gray-200" />
+              <button type="button" class="qty-increment px-3 py-1 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200">+</button>
+            </div>
+
             <button type="submit"
               class="w-full py-3 rounded-2xl font-bold text-sm
                      bg-gradient-to-r from-indigo-500 to-purple-500 text-white
                      hover:from-indigo-600 hover:to-purple-600 hover:shadow-lg
-                     shadow-md transition-all duration-300 transform hover:-translate-y-0.5 active:translate-y-0
+                     shadow-md transition-all duration-300 transform active:translate-y-0
                      flex items-center justify-center gap-2 group/btn relative overflow-hidden">
               <svg class="w-5 h-5 group-hover/btn:rotate-12 transition-transform duration-300" 
                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -188,4 +205,73 @@
     @endif
   </div>
 </div>
+<!-- AJAX add-to-cart handler -->
+@section('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  const tokenMeta = document.querySelector('meta[name="csrf-token"]');
+  const token = tokenMeta ? tokenMeta.getAttribute('content') : '';
+
+  function showToast(msg, ok=true){
+    let t = document.getElementById('toast');
+    if(!t){
+      t = document.createElement('div');
+      t.id = 'toast';
+      t.style.transition = 'opacity 0.3s';
+      t.className = 'fixed bottom-6 right-6 px-4 py-2 rounded shadow-lg text-white';
+      document.body.appendChild(t);
+    }
+    t.textContent = msg;
+    t.style.opacity = '1';
+    t.style.background = ok ? 'rgba(16,185,129,0.95)' : 'rgba(239,68,68,0.95)';
+    setTimeout(()=>{ t.style.opacity = '0'; }, 3000);
+  }
+
+  document.querySelectorAll('form.add-to-cart-form').forEach(form=>{
+    const dec = form.querySelector('.qty-decrement');
+    const inc = form.querySelector('.qty-increment');
+    const input = form.querySelector('input[name="qty"]');
+    if(dec && inc && input){
+      dec.addEventListener('click', ()=>{
+        let v = parseInt(input.value) || 1; v = Math.max(1, v-1); input.value = v;
+      });
+      inc.addEventListener('click', ()=>{
+        let v = parseInt(input.value) || 1; v = Math.max(1, v+1); input.value = v;
+      });
+    }
+
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+      const action = form.getAttribute('action');
+      const data = new FormData(form);
+
+      fetch(action, {
+        method: 'POST',
+        headers: {
+          'X-CSRF-TOKEN': token,
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json'
+        },
+        body: data
+      }).then(resp=>resp.json())
+      .then(json=>{
+        if(json && json.success){
+          showToast(json.message || 'Produk ditambahkan ke keranjang');
+          if(typeof json.cart_count !== 'undefined'){
+            const el = document.getElementById('cart-count');
+            if(el) el.textContent = json.cart_count;
+          }
+        } else {
+          showToast((json && json.message) ? json.message : 'Gagal menambahkan produk', false);
+        }
+      }).catch(err=>{
+        console.error(err);
+        showToast('Terjadi kesalahan jaringan', false);
+      });
+    });
+  });
+});
+</script>
+@endsection
+
 @endsection

@@ -3,7 +3,76 @@
 <head>
     <meta charset="utf-8">
     <title>Invoice</title>
-    <style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <div>
+            <div class="title">Nota Pembelian</div>
+        </div>
+        <div class="info">
+            <div><strong>No:</strong> INV-{{ str_pad($order->id, 6, '0', STR_PAD_LEFT) }}</div>
+            <div><strong>Tanggal:</strong> {{ $order->created_at->format('d M Y H:i') }}</div>
+         
+        </div>
+    </div>
+
+    <hr>
+
+    <div class="customer-info">
+        <div><strong>Pelanggan</strong></div>
+        <div>{{ $order->customer_name }}</div>
+        <div class="text-xs text-gray">{{ $order->customer_email }}</div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width:55%;">Produk</th>
+                <th class="right" style="width:10%;">Qty</th>
+                <th class="right" style="width:15%;">Harga</th>
+                <th class="right" style="width:20%;">Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($order->items as $item)
+            <tr>
+                <td>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        @if(isset($item->product) && ($item->product->image_url ?? false))
+                        <img src="{{ $item->product->image_url }}" style="width:48px;height:48px;object-fit:cover;border-radius:6px;" />
+                        @endif
+                        <div>
+                          <div style="font-weight:600;">{{ $item->product->name ?? ('Produk #' . $item->product_id) }}</div>
+                          @if(isset($item->product) && ($item->product->description ?? false))
+                            <div style="font-size:11px;color:#6b7280">{{ 
+                              Str::limit($item->product->description, 60) }}</div>
+                          @endif
+                        </div>
+                    </div>
+                </td>
+                <td class="right">{{ $item->qty }}</td>
+                <td class="right">Rp{{ number_format($item->price) }}</td>
+                <td class="right">Rp{{ number_format($item->price * $item->qty) }}</td>
+            </tr>
+            @endforeach
+        </tbody>
+    </table>
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:22px;">
+        <div style="font-size:12px;color:#6b7280">Catatan: Harap simpan invoice ini sebagai bukti pembayaran.</div>
+        <div style="text-align:right;">
+            <div class="text-sm" style="color:#6b7280">Subtotal</div>
+            <div class="total">Rp{{ number_format($order->total) }}</div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <div>Terima kasih telah berbelanja di <strong>Toko1</strong> 🙏</div>
+        <div>Kontak: samuel67 · +62 812-3456-7890</div>
+    </div>
+</div>
+ <style>
         body {
             font-family: DejaVu Sans, sans-serif;
             font-size: 12px;
@@ -91,58 +160,5 @@
             border-radius: 6px;
         }
     </style>
-</head>
-<body>
-<div class="container">
-    <div class="header">
-        <div class="title">INVOICE</div>
-        <div class="info">
-            <div><strong>No:</strong> INV-{{ $order->id }}</div>
-            <div><strong>Tanggal:</strong> {{ $order->created_at->format('d M Y') }}</div>
-        </div>
-    </div>
-
-    <hr>
-
-    <div class="customer-info">
-        <strong>Nama:</strong> {{ $order->customer_name }}<br>
-        <strong>Email:</strong> {{ $order->customer_email }}
-    </div>
-
-    <table>
-        <thead>
-            <tr>
-                <th>Produk</th>
-                <th class="right">Qty</th>
-                <th class="right">Harga</th>
-                <th class="right">Subtotal</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($order->items as $item)
-            <tr>
-                <td>Produk #{{ $item->product_id }} 
-                    @if($item->discount ?? false)
-                        <span class="badge">-{{ $item->discount }}%</span>
-                    @endif
-                </td>
-                <td class="right">{{ $item->qty }}</td>
-                <td class="right">Rp{{ number_format($item->price) }}</td>
-                <td class="right">Rp{{ number_format($item->price * $item->qty) }}</td>
-            </tr>
-            @endforeach
-        </tbody>
-    </table>
-
-    <div class="total-box">
-        <div>Total Pembayaran</div>
-        <div class="total">Rp{{ number_format($order->total) }}</div>
-    </div>
-
-    <div class="footer">
-        Terima kasih telah berbelanja di toko kami 🙏<br>
-        www.tokosaya.com
-    </div>
-</div>
 </body> 
 </html>

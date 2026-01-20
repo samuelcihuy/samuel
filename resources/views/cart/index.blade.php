@@ -36,66 +36,97 @@
         </a>
       </div>
     @else
-      <!-- Cart Table -->
-      <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 mb-8">
-        <div class="overflow-x-auto">
-          <table class="w-full">
-            <thead class="bg-gradient-to-r from-gray-50 to-gray-100">
-              <tr>
-                <th class="p-6 text-left font-semibold text-gray-700 text-lg">Produk</th>
-                <th class="p-6 text-center font-semibold text-gray-700 text-lg">Qty</th>
-                <th class="p-6 text-right font-semibold text-gray-700 text-lg">Harga</th>
-                <th class="p-6 text-right font-semibold text-gray-700 text-lg">Subtotal</th>
-                <th class="p-6 text-right font-semibold text-gray-700 text-lg"></th>
-              </tr>
-            </thead>
-            <tbody>
-              @php $total = 0; @endphp
-              @foreach($cart as $item)
-                @php
-                  $subtotal = $item['price'] * $item['qty'];
-                  $total += $subtotal;
-                @endphp
-                <tr class="border-t border-gray-100 hover:bg-gray-50/50 transition-colors duration-200">
-                  <td class="p-6 font-medium text-gray-900">
-                    <div class="flex items-center gap-4">
-                      <div class="w-16 h-16 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=100&h=100&fit=crop" 
-                             alt="{{ $item['name'] }}"
-                             class="w-full h-full object-cover">
-                      </div>
-                      <span class="font-semibold">{{ $item['name'] }}</span>
-                    </div>
-                  </td>
-                  <td class="p-6 text-center">
-                    <div class="inline-flex items-center gap-3">
-                      <span class="font-bold text-lg min-w-[40px]">{{ $item['qty'] }}</span>
-                    </div>
-                  </td>
-                  <td class="p-6 text-right text-lg font-semibold text-gray-900">
-                    Rp{{ number_format($item['price']) }}
-                  </td>
-                  <td class="p-6 text-right">
-                    <span class="text-xl font-bold text-indigo-700">
-                      Rp{{ number_format($subtotal) }}
-                    </span>
-                  </td>
-                  <td class="p-6 text-right">
-                    <form action="/cart/remove/{{ $item['product_id'] }}" method="POST"
-                          onsubmit="return confirm('Yakin ingin menghapus produk ini dari keranjang?')">
-                      @csrf
-                      <button type="submit" 
-                              class="w-12 h-12 flex items-center justify-center rounded-xl bg-red-50 hover:bg-red-100 text-red-500 hover:text-red-600 transition-all duration-300 transform hover:scale-105 active:scale-95">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                        </svg>
-                      </button>
-                    </form>
-                  </td>
+      <!-- Cart Table (desktop) + Card list (mobile) -->
+      <div class="mb-6">
+        <!-- Mobile list -->
+        <div class="md:hidden space-y-4">
+          @php $total = 0; @endphp
+          @foreach($cart as $item)
+            @php $subtotal = $item['price'] * $item['qty']; $total += $subtotal; @endphp
+            <div class="bg-white rounded-xl p-4 shadow-sm border">
+              <div class="flex items-start gap-4">
+                <div class="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                  <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=100&h=100&fit=crop" alt="{{ $item['name'] }}" class="w-full h-full object-cover">
+                </div>
+                <div class="flex-1">
+                  <div class="font-semibold">{{ $item['name'] }}</div>
+                  <div class="text-sm text-gray-500">Qty: {{ $item['qty'] }}</div>
+                  <div class="text-indigo-700 font-bold mt-2">Rp{{ number_format($subtotal) }}</div>
+                </div>
+                <div class="ml-2">
+                  <form action="/cart/remove/{{ $item['product_id'] }}" method="POST" onsubmit="return confirm('Hapus item?')">
+                    @csrf
+                    <button type="submit" class="w-10 h-10 flex items-center justify-center rounded-lg bg-red-50 text-red-600 hover:bg-red-100">
+                      ✕
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          @endforeach
+        </div>
+
+        <!-- Desktop table -->
+        <div class="hidden md:block bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="bg-gradient-to-r from-gray-50 to-gray-100">
+                <tr>
+                  <th class="p-6 text-left font-semibold text-gray-700 text-lg">Produk</th>
+                  <th class="p-6 text-center font-semibold text-gray-700 text-lg">Qty</th>
+                  <th class="p-6 text-right font-semibold text-gray-700 text-lg">Harga</th>
+                  <th class="p-6 text-right font-semibold text-gray-700 text-lg">Subtotal</th>
+                  <th class="p-6 text-right font-semibold text-gray-700 text-lg"></th>
                 </tr>
-              @endforeach
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                @php $total = 0; @endphp
+                @foreach($cart as $item)
+                  @php
+                    $subtotal = $item['price'] * $item['qty'];
+                    $total += $subtotal;
+                  @endphp
+                  <tr class="border-t border-gray-100 hover:bg-gray-50/50 transition-colors duration-200">
+                    <td class="p-6 font-medium text-gray-900">
+                      <div class="flex items-center gap-4">
+                        <div class="w-16 h-16 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl overflow-hidden">
+                          <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=100&h=100&fit=crop" 
+                               alt="{{ $item['name'] }}"
+                               class="w-full h-full object-cover">
+                        </div>
+                        <span class="font-semibold">{{ $item['name'] }}</span>
+                      </div>
+                    </td>
+                    <td class="p-6 text-center">
+                      <div class="inline-flex items-center gap-3">
+                        <span class="font-bold text-lg min-w-[40px]">{{ $item['qty'] }}</span>
+                      </div>
+                    </td>
+                    <td class="p-6 text-right text-lg font-semibold text-gray-900">
+                      Rp{{ number_format($item['price']) }}
+                    </td>
+                    <td class="p-6 text-right">
+                      <span class="text-xl font-bold text-indigo-700">
+                        Rp{{ number_format($subtotal) }}
+                      </span>
+                    </td>
+                    <td class="p-6 text-right">
+                      <form action="/cart/remove/{{ $item['product_id'] }}" method="POST"
+                            onsubmit="return confirm('Yakin ingin menghapus produk ini dari keranjang?')">
+                        @csrf
+                        <button type="submit" 
+                                class="w-12 h-12 flex items-center justify-center rounded-xl bg-red-50 hover:bg-red-100 text-red-500 hover:text-red-600 transition-all duration-300 transform hover:scale-105 active:scale-95">
+                          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                          </svg>
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                @endforeach
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
